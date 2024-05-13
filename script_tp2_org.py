@@ -30,13 +30,13 @@ def switch(operator_counter):
     if operator_counter == 0:
         operator = "Gradient"
     elif operator_counter == 1:
-        operator = "Gradient Erosion"
+        operator = "Gradient Intérieur"
     elif operator_counter == 2:
-        operator = "Gradient Dilation"
+        operator = "Gradient Extérieur"
     elif operator_counter == 3:
-        operator = "Top Hat Ouverture"
+        operator = "Top Hat"
     elif operator_counter == 4:
-        operator = "Top Hat Fermeture"
+        operator = "Top Hat Conjugué"
     else:
         return -1
     return operator
@@ -65,7 +65,7 @@ def ImAllOperations(img, se):
 
 def evaluate_operation(image, image_mask, structural_elements):
     best_f1 = 0
-    for seuil in range(5,10):
+    for seuil in range(5,15):
         for se in structural_elements:
             images = ImAllOperations(image, se)
             count_operator = 0
@@ -126,6 +126,8 @@ structure_elements = [se3, se4, se5, se6, se7] + squares + diamands
 
 img_number = [('01', 'OSC'), ('02', 'OSC'), ('03', 'OSN'), ('08', 'OSN'), ('21', 'OSC'), ('26', 'ODC'), ('28', 'ODN'), ('32', 'ODC'), ('37', 'ODN'), ('48', 'OSN')]
 
+scores = []
+
 # Ouvrir l'image originale en niveau de gris
 img_original = np.asarray(Image.open("./images_IOSTAR/star02_OSC.jpg")).astype(np.uint8)
 
@@ -140,7 +142,7 @@ img_mask[invalid_pixels] = 0
 # Ouvrir l'image Verite Terrain en booleen
 img_GT = np.asarray(Image.open("./images_IOSTAR/GT_02.png")).astype(np.bool_)
 
-# Operation de filtre moyenne sur l'image originale
+# Operation de filtre moyen sur l'image originale
 img_filtered = filters.rank.mean(img_original, square(3))
 
 # Évaluation de la meilleure operation, le meilleur élément structurant, le meilleur seuil et les images résultantes
@@ -202,6 +204,7 @@ for number in img_number:
 
     # Évaluation de la meilleure opération de reconstruction
     f1_score_rec, best_si, best_sj, best_rec, result_skel_rec = evaluate_reconstruction(result_imag_seg)
+    scores.append(f1_score_rec*100)
 
     print(f"\nReconstruction -> F1: {f1_score_rec}, square({best_si}), foot print = square({best_sj})")
     plt.subplot(121)
@@ -212,3 +215,5 @@ for number in img_number:
     plt.title("Verite Terrain")
     plt.suptitle(f"Comparaison Entre Résultat et Objectif - Image: star{number[0]}_{number[1]}.jpg")
     plt.show()
+
+print("Average score from all the images: ", np.average(scores))
